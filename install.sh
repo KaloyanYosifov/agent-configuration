@@ -20,7 +20,7 @@ err()  { echo -e "${RED}  error${NC}   $1" >&2; }
 # ---------------------------------------------------------------------------
 
 link_dir() {
-    local src="$1"
+    local src="${1%/}"   # strip trailing slash
     local dest_dir="$2"
     local name
     name="$(basename "$src")"
@@ -31,7 +31,9 @@ link_dir() {
         return
     fi
 
-    ln -sf "$src" "$dest"
+    # Remove existing symlink first; ln -sf on a symlink-to-dir nests inside it
+    [[ -L "$dest" ]] && rm "$dest"
+    ln -s "$src" "$dest"
     info "$src -> $dest"
 }
 
@@ -58,7 +60,7 @@ install_skills_to() {
     mkdir -p "$target/skills"
 
     local count=0
-    for d in "$SCRIPT_DIR/skills/"/*/; do
+    for d in "$SCRIPT_DIR/skills"/*/; do
         [[ -d "$d" ]] || continue
         link_dir "$d" "$target/skills"
         (( count++ )) || true
