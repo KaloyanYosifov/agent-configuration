@@ -2,7 +2,12 @@
   "cursor": {
     "version": 1,
     "hooks": {
-      "postToolUseFailure": [
+      "beforeShellExecution": [
+        {
+          "command": "$HOOKS_DIR/notify-permission.sh"
+        }
+      ],
+      "beforeMCPToolExecution": [
         {
           "command": "$HOOKS_DIR/notify-permission.sh"
         }

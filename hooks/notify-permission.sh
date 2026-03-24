@@ -1,11 +1,13 @@
 #!/usr/bin/env python3
 """
-Works for both Cursor (postToolUseFailure) and Claude Code (Notification hook).
-Shows a macOS notification when a tool fails, times out, or hits permission_denied.
-Skips user-initiated interrupts.
+Universal permission/notification hook for both Cursor and Claude Code.
 
-Note: Cursor has no hook that fires exactly when the approval dialog first appears;
-permission_denied runs after a denial/block, not at the moment the UI is waiting.
+Cursor hooks (beforeShellExecution, beforeMCPToolExecution):
+  - Notifies the user about the pending action.
+  - Prints {"continue": true} so Cursor still shows its approval UI.
+
+Claude Code hook (Notification):
+  - Notifies the user when Claude needs attention (e.g. permission request).
 """
 import json
 import os
@@ -33,11 +35,16 @@ def agent_label() -> str:
 
 
 def applescript_string(s: str) -> str:
-    """Escape for AppleScript double-quoted string literal."""
     s = s.replace("\\", "\\\\").replace('"', '\\"').replace("\n", " ").replace("\r", " ")
     if len(s) > 200:
         s = s[:197] + "..."
     return s
+
+
+def notify(msg: str, agent: str) -> None:
+    body = applescript_string(msg)
+    script = f'display notification "{body}" with title "{agent}" sound name "Ping"'
+    subprocess.run(["osascript", "-e", script], check=False)
 
 
 def main() -> None:
@@ -49,16 +56,24 @@ def main() -> None:
     if d.get("is_interrupt"):
         sys.exit(0)
 
+    agent = agent_label()
+    name = workspace_label(d)
+
+    # Cursor before* hooks: tool_name / command present, no failure_type
+    tool = d.get("tool_name") or d.get("command") or ""
+    if tool and "failure_type" not in d:
+        label = tool if len(tool) <= 60 else tool[:57] + "..."
+        notify(f"{agent} wants to run: {label} ({name})", agent)
+        print(json.dumps({"continue": True}))
+        return
+
+    # Claude Code Notification hook / Cursor postToolUseFailure
     ft = d.get("failure_type") or ""
-    # Claude Code uses "reason" field for Notification events; treat those too.
     reason = d.get("reason") or ""
     if ft not in ("permission_denied", "error", "timeout") and not reason:
         sys.exit(0)
 
-    agent = agent_label()
-    name = workspace_label(d)
     err = (d.get("error_message") or "").strip()
-
     if reason:
         msg = f"{reason} ({name})"
     elif ft == "permission_denied":
@@ -69,9 +84,7 @@ def main() -> None:
         tail = err if len(err) <= 120 else err[:117] + "..."
         msg = f"{msg}: {tail}"
 
-    body = applescript_string(msg)
-    script = f'display notification "{body}" with title "{agent}" sound name "Ping"'
-    subprocess.run(["osascript", "-e", script], check=False)
+    notify(msg, agent)
 
 
 if __name__ == "__main__":
