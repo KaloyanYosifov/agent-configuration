@@ -1,0 +1,41 @@
+{
+  "cursor": {
+    "version": 1,
+    "hooks": {
+      "postToolUseFailure": [
+        {
+          "command": "$HOOKS_DIR/notify-permission.sh"
+        }
+      ],
+      "stop": [
+        {
+          "command": "$HOOKS_DIR/notify-done.sh"
+        }
+      ]
+    }
+  },
+  "claude": {
+    "hooks": {
+      "Notification": [
+        {
+          "hooks": [
+            {
+              "type": "command",
+              "command": "$HOOKS_DIR/notify-permission.sh"
+            }
+          ]
+        }
+      ],
+      "Stop": [
+        {
+          "hooks": [
+            {
+              "type": "command",
+              "command": "$HOOKS_DIR/notify-done.sh"
+            }
+          ]
+        }
+      ]
+    }
+  }
+}
