@@ -66,7 +66,9 @@ install_skills_to() {
         (( count++ )) || true
     done
 
-    [[ $count -gt 0 ]] && log "Installed $count skill(s) to $target/skills"
+    if [[ $count -gt 0 ]]; then
+        log "Installed $count skill(s) to $target/skills"
+    fi
 }
 
 # ---------------------------------------------------------------------------
@@ -85,7 +87,9 @@ install_agents_to() {
         (( count++ )) || true
     done
 
-    [[ $count -gt 0 ]] && log "Installed $count agents(s) to $target/agents"
+    if [[ $count -gt 0 ]]; then
+        log "Installed $count agents(s) to $target/agents"
+    fi
 }
 
 # ---------------------------------------------------------------------------
@@ -231,13 +235,15 @@ usage() {
 Usage: $(basename "$0") [options]
 
 Options:
-  --targets=...   Comma-separated list of target dirs (default: ~/.claude,~/.cursor,~/.agents)
+  --targets=...   Comma-separated list of target dirs; may be repeated (default: ~/.claude,~/.cursor,~/.agents)
+  --targets PATH  Same as --targets=PATH (next argument)
   -h, --help      Show this help
 
 Examples:
   ./install.sh
   ./install.sh --targets=~/.claude
   ./install.sh --targets=~/.claude,~/.cursor
+  ./install.sh --targets=~/.claude --targets=~/.cursor
 EOF
 }
 
@@ -245,18 +251,60 @@ EOF
 # Main
 # ---------------------------------------------------------------------------
 
-TARGETS=("$HOME/.claude" "$HOME/.cursor" "$HOME/.agents")
+DEFAULT_TARGETS=("$HOME/.claude" "$HOME/.cursor" "$HOME/.agents")
+TARGETS=()
+_targets_from_flags=0
 
-for arg in "$@"; do
-    case "$arg" in
+_trim() {
+    local s="$1"
+    s="${s#"${s%%[![:space:]]*}"}"
+    s="${s%"${s##*[![:space:]]}"}"
+    printf '%s' "$s"
+}
+
+_append_targets_csv() {
+    local csv="$1"
+    [[ -z "$csv" ]] && return
+    local parts
+    IFS=',' read -ra parts <<< "$csv"
+    local t
+    for t in "${parts[@]}"; do
+        t="$(_trim "$t")"
+        [[ -z "$t" ]] && continue
+        t="${t/#\~/$HOME}"
+        TARGETS+=("$t")
+    done
+}
+
+while [[ $# -gt 0 ]]; do
+    case "$1" in
         --targets=*)
-            IFS=',' read -ra TARGETS <<< "${arg#--targets=}"
-            TARGETS=("${TARGETS[@]/#\~/$HOME}")
+            if [[ $_targets_from_flags -eq 0 ]]; then
+                TARGETS=()
+                _targets_from_flags=1
+            fi
+            _append_targets_csv "${1#--targets=}"
+            shift
+            ;;
+        --targets)
+            if [[ $# -lt 2 ]]; then
+                err "--targets requires a value"
+                usage
+                exit 1
+            fi
+            if [[ $_targets_from_flags -eq 0 ]]; then
+                TARGETS=()
+                _targets_from_flags=1
+            fi
+            _append_targets_csv "$2"
+            shift 2
             ;;
         -h|--help) usage; exit 0 ;;
-        *) err "Unknown argument: $arg"; usage; exit 1 ;;
+        *) err "Unknown argument: $1"; usage; exit 1 ;;
     esac
 done
+
+[[ $_targets_from_flags -eq 0 ]] && TARGETS=("${DEFAULT_TARGETS[@]}")
 
 for target in "${TARGETS[@]}"; do
     log "Installing to $target..."
