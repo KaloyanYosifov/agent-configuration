@@ -70,6 +70,25 @@ install_skills_to() {
 }
 
 # ---------------------------------------------------------------------------
+# Install agents into a single target (e.g. ~/.claude)
+# ---------------------------------------------------------------------------
+
+install_agents_to() {
+    local target="$1"
+
+    mkdir -p "$target/agents"
+
+    local count=0
+    for d in "$SCRIPT_DIR/agents"/*/; do
+        [[ -d "$d" ]] || continue
+        link_dir "$d" "$target/agents"
+        (( count++ )) || true
+    done
+
+    [[ $count -gt 0 ]] && log "Installed $count agents(s) to $target/agents"
+}
+
+# ---------------------------------------------------------------------------
 # Install hooks: link hook files, then merge config
 # ---------------------------------------------------------------------------
 
@@ -242,6 +261,7 @@ done
 for target in "${TARGETS[@]}"; do
     log "Installing to $target..."
     install_skills_to "$target"
+    install_agents_to "$target"
     install_hooks_to  "$target"
 done
 
