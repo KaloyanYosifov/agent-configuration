@@ -17,19 +17,46 @@ fi
 [[ -z "$cmd" ]] && exit 0
 
 # Get current workspace directory (passed by Cursor/Claude or fall back to $PWD)
-workspace="${WORKSPACE:-${PWD}}"
-workspace=$(cd "$workspace" && pwd)  # canonicalize
+# Canonicalize with realpath semantics so prefix checks match resolved rm targets.
+_workspace_raw="${WORKSPACE:-${PWD}}"
+if command -v python3 >/dev/null 2>&1; then
+  workspace=$(python3 -c "import os,sys; print(os.path.realpath(sys.argv[1]))" "$_workspace_raw")
+else
+  workspace=$(cd "$_workspace_raw" && pwd -P)
+fi
 
-# Function to check if a path is safe
+# True if resolved path is under workspace or /tmp (handles .., symlinks, macOS /private/tmp).
 is_safe_path() {
   local path="$1"
-  # Expand and canonicalize
-  path=$(cd "$(dirname "$path")" 2>/dev/null && pwd -P)/$(basename "$path") 2>/dev/null || true
-  
+  local resolved
+
   [[ -z "$path" ]] && return 1
-  
-  # Allowed: inside workspace or /tmp
-  if [[ "$path" == "$workspace"/* ]] || [[ "$path" == /tmp/* ]] || [[ "$path" == "$workspace" ]]; then
+
+  if command -v python3 >/dev/null 2>&1; then
+    resolved=$(PYTHONDONTWRITEBYTECODE=1 python3 -c '
+import os, sys
+ws, p = sys.argv[1], sys.argv[2]
+if p.startswith("-"):
+    sys.exit(1)
+full = os.path.join(ws, p) if not os.path.isabs(p) else p
+print(os.path.realpath(full))
+' "$workspace" "$path" 2>/dev/null) || return 1
+  elif command -v realpath >/dev/null 2>&1 && realpath -m / >/dev/null 2>&1; then
+    if [[ "$path" == /* ]]; then
+      resolved=$(realpath -m "$path" 2>/dev/null) || return 1
+    else
+      resolved=$(realpath -m "$workspace/$path" 2>/dev/null) || return 1
+    fi
+  else
+    resolved=$(cd "$workspace" 2>/dev/null && cd -- "$path" 2>/dev/null && pwd -P) || return 1
+  fi
+
+  [[ -z "$resolved" ]] && return 1
+
+  if [[ "$resolved" == "$workspace" || "$resolved" == "$workspace/"* ]]; then
+    return 0
+  fi
+  if [[ "$resolved" == /tmp || "$resolved" == /tmp/* || "$resolved" == /private/tmp || "$resolved" == /private/tmp/* ]]; then
     return 0
   fi
   return 1
