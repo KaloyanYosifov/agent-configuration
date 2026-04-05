@@ -161,7 +161,10 @@ for event, entries in desired.items():
         new_hooks = [h for h in entry.get("hooks", [])
                      if h.get("command", "") not in existing_cmds]
         if new_hooks:
-            existing.append({"hooks": new_hooks})
+            # Preserve matcher, if, timeout, etc. (required for PreToolUse groups)
+            new_entry = dict(entry)
+            new_entry["hooks"] = new_hooks
+            existing.append(new_entry)
             for h in new_hooks:
                 existing_cmds.add(h.get("command", ""))
             changed = True

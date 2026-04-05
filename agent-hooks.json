@@ -4,6 +4,9 @@
     "hooks": {
       "beforeShellExecution": [
         {
+          "command": "$HOOKS_DIR/block-dangerous.sh"
+        },
+        {
           "command": "$HOOKS_DIR/notify-permission.sh"
         }
       ],
@@ -21,6 +24,17 @@
   },
   "claude": {
     "hooks": {
+      "PreToolUse": [
+        {
+          "matcher": "Bash",
+          "hooks": [
+            {
+              "type": "command",
+              "command": "$HOOKS_DIR/block-dangerous.sh"
+            }
+          ]
+        }
+      ],
       "Notification": [
         {
           "hooks": [
