@@ -64,7 +64,8 @@ def main() -> None:
     if tool and "failure_type" not in d:
         label = tool if len(tool) <= 60 else tool[:57] + "..."
         notify(f"{agent} wants to run: {label} ({name})", agent)
-        print(json.dumps({"continue": True}))
+        # Cursor beforeShellExecution / beforeMCPExecution expect permission (and often continue).
+        print(json.dumps({"continue": True, "permission": "allow"}))
         return
 
     # Claude Code Notification hook / Cursor postToolUseFailure

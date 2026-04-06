@@ -10,12 +10,17 @@
           "command": "$HOOKS_DIR/notify-permission.sh"
         }
       ],
-      "beforeFileModification": [
+      "preToolUse": [
         {
-          "command": "$HOOKS_DIR/protect-files.sh"
+          "command": "$HOOKS_DIR/block-dangerous.sh",
+          "matcher": "Delete|Shell"
+        },
+        {
+          "command": "$HOOKS_DIR/protect-files.sh",
+          "matcher": "Delete|Write"
         }
       ],
-      "beforeMCPToolExecution": [
+      "beforeMCPExecution": [
         {
           "command": "$HOOKS_DIR/notify-permission.sh"
         }
