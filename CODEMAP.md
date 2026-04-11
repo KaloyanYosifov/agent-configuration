@@ -1,22 +1,22 @@
-# CODEMAP.md - Agent Configuration Project
+# CODEMAP.md - Agent Config
 
 ## Overview
 
-A centralized configuration repository for AI agent workflows (Claude Code and Cursor), providing reusable skills, hooks, and agents that enhance productivity and enforce best practices.
+Centralized AI agent workflow config (Claude Code, Cursor). Reusable skills, hooks, agents.
 
 ---
 
-## Architecture Diagram
+## Architecture
 
 ```dot
 digraph agent_config {
     rankdir=TB;
 
     subgraph cluster_project {
-        label="agent-configuration (source of truth)";
+        label="agent-configuration";
 
         subgraph cluster_skills {
-            label="Skills (reusable capabilities)";
+            label="Skills";
             tdd["test-driven-development"];
             excalidraw["excalidraw"];
             deep_research["deep-research"];
@@ -24,14 +24,14 @@ digraph agent_config {
         }
 
         subgraph cluster_hooks {
-            label="Hooks (lifecycle interceptors)";
+            label="Hooks";
             notify_perm["notify-permission.sh"];
             notify_done["notify-done.sh"];
             block_danger["block-dangerous.sh"];
         }
 
         subgraph cluster_agents {
-            label="Agents (specialized subagents)";
+            label="Agents";
             code_reviewer["code-reviewer.md"];
         }
 
@@ -40,7 +40,7 @@ digraph agent_config {
     }
 
     subgraph cluster_targets {
-        label="Target Directories";
+        label="Targets";
 
         subgraph cluster_claude {
             label="~/.claude";
@@ -60,55 +60,39 @@ digraph agent_config {
     install -> claude_skills, cursor_skills;
     install -> claude_hooks, cursor_hooks;
     hooks_json -> settings, hooks_json_cursor;
-
-    style cluster_project fill:#f0f0f0,stroke:#333;
-    style cluster_targets fill:#e8f4fc,stroke:#333;
 }
 ```
 
 ---
 
-## Directory Structure
+## Directory
 
 ```
 agent-configuration/
-├── install.sh                 # Installation script (symlinks to targets)
-├── agent-hooks.json           # Hook configuration template
+├── install.sh                 # Symlinks to targets
+├── agent-hooks.json           # Hook config template
 ├── CODEMAP.md                 # This file
-│
 ├── skills/                    # Reusable capabilities
 │   ├── test-driven-development/
-│   │   ├── SKILL.md          # TDD methodology
-│   │   └── testing-anti-patterns.md
 │   ├── subagent-driven-development/
-│   │   ├── SKILL.md          # Parallel task execution
-│   │   ├── implementer-prompt.md
-│   │   ├── spec-reviewer-prompt.md
-│   │   └── code-quality-reviewer-prompt.md
 │   ├── deep-research/
-│   │   └── SKILL.md          # Systematic web research
 │   ├── excalidraw/
-│   │   ├── SKILL.md          # Diagram generation
-│   │   ├── references/
-│   │   └── scripts/
 │   ├── web-fetch/
 │   ├── web-search/
-│   ├── glab/                 # GitLab CLI
+│   ├── glab/
 │   ├── brainstorming/
 │   ├── humanizer/
 │   ├── verification-before-completion/
 │   ├── dispatching-parallel-agents/
 │   ├── executing-plans/
-│   ├── mlx-whisper/          # Speech-to-text
+│   ├── mlx-whisper/
 │   └── writing-plans/
-│
 ├── hooks/                     # Lifecycle interceptors
-│   ├── notify-permission.sh   # macOS notifications on permission requests
-│   ├── notify-done.sh         # macOS notifications on completion
-│   └── block-dangerous.sh     # Blocks dangerous commands
-│
+│   ├── notify-permission.sh
+│   ├── notify-done.sh
+│   └── block-dangerous.sh
 └── agents/                    # Specialized subagents
-    └── code-reviewer.md       # Code review agent template
+    └── code-reviewer.md
 ```
 
 ---
@@ -117,108 +101,55 @@ agent-configuration/
 
 ### Skills
 
-Skills are reusable capabilities loaded via `@skill-name` syntax.
-
 | Skill | Purpose | Trigger |
 |-------|---------|--------|
-| `test-driven-development` | Enforces TDD methodology | Before writing production code |
-| `subagent-driven-development` | Parallel task execution with review | Executing implementation plans |
-| `deep-research` | Systematic multi-angle web research | Questions requiring current info |
-| `excalidraw` | Hand-drawn style diagram generation | User requests diagrams |
-| `glab` | GitLab CLI interaction | GitLab URLs or mentions |
-| `brainstorming` | Creative exploration before implementation | New features, creative work |
-| `humanizer` | Remove AI-generated writing patterns | Editing/reviewing text |
-| `verification-before-completion` | Run verification before claiming done | Before marking work complete |
-| `dispatching-parallel-agents` | Coordinate parallel agent work | Multiple independent tasks |
-| `executing-plans` | Execute plans in parallel session | Plan execution (separate session) |
-| `mlx-whisper` | Local speech-to-text transcription | Audio files present |
-| `writing-plans` | Create implementation plans | Multi-step tasks |
-| `web-fetch` | Fetch full page content | Need realtime info |
-| `web-search` | Web search capability | Current events, latest info |
+| `test-driven-development` | TDD methodology | Before production code |
+| `subagent-driven-development` | Parallel task execution | Implementation plans |
+| `deep-research` | Multi-angle web research | Current info needed |
+| `excalidraw` | Hand-drawn diagrams | User requests |
+| `glab` | GitLab CLI | GitLab mentions |
+| `brainstorming` | Creative exploration | New features |
+| `humanizer` | Remove AI patterns | Text review |
+| `verification-before-completion` | Verify before done | Before marking complete |
+| `dispatching-parallel-agents` | Parallel agent work | Multiple tasks |
+| `executing-plans` | Plan execution | Separate session |
+| `mlx-whisper` | Speech-to-text | Audio files |
+| `writing-plans` | Implementation plans | Multi-step tasks |
+| `web-fetch` | Page content | Realtime info |
+| `web-search` | Web search | Current events |
 
 ### Hooks
 
-Hooks intercept lifecycle events for both Claude Code and Cursor.
-
-#### Hook Files
-
 | Hook | Event | Description |
 |------|-------|-------------|
-| `notify-permission.sh` | `beforeShellExecution` / `beforeMCPToolExecution` (Cursor)<br>`Notification` (Claude) | Shows macOS notification when agent needs permission |
-| `notify-done.sh` | `stop` | Shows macOS notification when agent finishes |
-| `block-dangerous.sh` | `beforeShellExecution` (Cursor)<br>`PreToolUse:Bash` (Claude) | Blocks dangerous commands (rm -rf, git reset --hard, etc.) |
-
-#### Hook Flow Diagram
-
-```dot
-digraph hook_flow {
-    rankdir=LR;
-
-    subgraph cluster_cursor {
-        label="Cursor Hooks";
-        before_shell["beforeShellExecution"] -> block_dangerous["block-dangerous.sh"] -> notify_perm["notify-permission.sh"];
-        before_mcp["beforeMCPToolExecution"] -> notify_perm;
-        stop["stop"] -> notify_done["notify-done.sh"];
-    }
-
-    subgraph cluster_claude {
-        label="Claude Code Hooks";
-        pre_tool["PreToolUse:Bash"] -> block_dangerous_claude["block-dangerous.sh"] -> rtk["rtk-rewrite.sh"];
-        notification["Notification"] -> notify_perm_claude["notify-permission.sh"];
-        stop_claude["Stop"] -> notify_done_claude["notify-done.sh"];
-    }
-}
-```
+| `notify-permission.sh` | `beforeShellExecution`/`beforeMCPToolExecution` (Cursor)<br>`Notification` (Claude) | macOS notification on permission |
+| `notify-done.sh` | `stop` | macOS notification on finish |
+| `block-dangerous.sh` | `beforeShellExecution` (Cursor)<br>`PreToolUse:Bash` (Claude) | Blocks rm -rf, git reset --hard, etc. |
 
 ### Agents
 
-Agents are specialized subagents for specific tasks.
-
 | Agent | Purpose |
 |-------|--------|
-| `code-reviewer.md` | Performs code reviews following standardized template |
+| `code-reviewer.md` | Standardized code review |
 
 ---
 
-## Installation & Configuration
+## Installation
 
 ### install.sh
 
-The installation script performs three operations:
-
-1. **Link skills**: Symlinks all `skills/*/` directories to target's `skills/`
-2. **Link agents**: Symlinks all `agents/*/` directories to target's `agents/`
-3. **Link hooks & merge config**:
-   - Symlinks hook scripts to target's `hooks/`
-   - Merges `agent-hooks.json` into target's config:
-     - Claude: `.claude/settings.json`
-     - Cursor: `.cursor/hooks.json`
+1. Symlink skills to target
+2. Symlink agents to target
+3. Symlink hooks + merge agent-hooks.json into config
 
 ### agent-hooks.json
 
-Template configuration with `$HOOKS_DIR` placeholder:
+Template with `$HOOKS_DIR` placeholder.
 
-```json
-{
-  "cursor": {
-    "hooks": {
-      "beforeShellExecution": [{"command": "$HOOKS_DIR/notify-permission.sh"}],
-      "stop": [{"command": "$HOOKS_DIR/notify-done.sh"}]
-    }
-  },
-  "claude": {
-    "hooks": {
-      "Notification": [{"hooks": [{"command": "$HOOKS_DIR/notify-permission.sh"}]}],
-      "Stop": [{"hooks": [{"command": "$HOOKS_DIR/notify-done.sh"}]}]
-    }
-  }
-}
-```
+### Targets
 
-### Installation Targets
-
-| Target | Skills Path | Hooks Path | Config File |
-|--------|-------------|------------|-------------|
+| Target | Skills | Hooks | Config |
+|--------|--------|-------|--------|
 | `~/.claude` | `.claude/skills/` | `.claude/hooks/` | `.claude/settings.json` |
 | `~/.cursor` | `.cursor/skills/` | `.cursor/hooks/` | `.cursor/hooks.json` |
 | `~/.agents` | `.agents/skills/` | `.agents/hooks/` | N/A |
@@ -230,42 +161,40 @@ Template configuration with `$HOOKS_DIR` placeholder:
 ### Skill Invocation
 
 ```
-User: @test-driven-development implement feature X
+User: @test-driven-development implement X
      |
      v
 Claude/Cursor reads skills/test-driven-development/SKILL.md
      |
      v
-Follows TDD methodology from skill
+Follows TDD methodology
 ```
 
-### Hook Execution (Claude Code - Bash command)
+### Hook Execution (Claude Code)
 
 ```
-User requests: git status
+User: git status
      |
      v
 PreToolUse:Bash hook triggers
      |
-     +-> block-dangerous.sh (exits 2 to block, 0 to allow)
-     |
-     +-> rtk-rewrite.sh (rewrites to rtk git status, saves tokens)
+     +-> block-dangerous.sh (exit 2=block, 0=allow)
+     +-> rtk-rewrite.sh (rewrites to rtk git status)
      |
      v
 Command executes (if not blocked)
 ```
 
-### Hook Execution (Cursor - Shell command)
+### Hook Execution (Cursor)
 
 ```
-User requests: ls -la
+User: ls -la
      |
      v
 beforeShellExecution hook triggers
      |
-     +-> block-dangerous.sh (prints {"continue": true} to allow)
-     |
-     +-> notify-permission.sh (shows macOS notification)
+     +-> block-dangerous.sh (prints {"continue": true})
+     +-> notify-permission.sh (macOS notification)
      |
      v
 Command executes (if not blocked)
@@ -288,59 +217,29 @@ implementer subagent
          |
          | (reviewed by)
          +-> spec-reviewer subagent
-         |
          +-> code-quality-reviewer subagent
 ```
 
 ---
 
-## Files Reference
+## Usage
 
-### Source Files (in repo)
-
-| File | Type | Description |
-|------|------|-------------|
-| `install.sh` | Bash | Installation script |
-| `agent-hooks.json` | JSON | Hook config template |
-| `skills/*/SKILL.md` | Markdown | Skill documentation |
-| `hooks/*.sh` | Bash/Python | Hook scripts |
-| `agents/*.md` | Markdown | Agent templates |
-
-### Generated Files (in targets)
-
-| File | Type | Description |
-|------|------|-------------|
-| `.claude/settings.json` | JSON | Claude Code config (merged) |
-| `.cursor/hooks.json` | JSON | Cursor hooks config (merged) |
-| `.claude/skills/*/` | Symlink | Skills symlinks |
-| `.cursor/skills/*/` | Symlink | Skills symlinks |
-| `.claude/hooks/*.sh` | Symlink | Hook symlinks |
-| `.cursor/hooks/*.sh` | Symlink | Hook symlinks |
-
----
-
-## Usage Examples
-
-### Using a Skill
+### Skill
 
 ```bash
-# In Claude/Cursor chat:
-@test-driven-development Write a function that parses CSV
+@test-driven-development Write function that parses CSV
 ```
 
-### Installing to Custom Target
+### Install to custom target
 
 ```bash
 ./install.sh --targets=~/.my-agent-config
 ```
 
-### Hook Blocking Example
+### Blocked command
 
 ```bash
-# This command will be blocked:
 rm -rf /important/data
-
-# Error output:
-Blocked: 'rm -rf /important/data' matches dangerous pattern 'rm -rf'.
-Propose a safer alternative.
+# Blocked: 'rm -rf /important/data' matches pattern 'rm -rf'.
+# Propose safer alternative.
 ```
