@@ -11,42 +11,31 @@ RED='\033[0;31m'
 NC='\033[0m'
 
 log()  { echo -e "${GREEN}[install]${NC} $1"; }
-info() { echo -e "${BLUE}  linked${NC}  $1"; }
+info() { echo -e "${BLUE}  copied${NC}  $1"; }
 warn() { echo -e "${YELLOW}  warn${NC}    $1"; }
 err()  { echo -e "${RED}  error${NC}   $1" >&2; }
 
 # ---------------------------------------------------------------------------
-# Linking helpers
+# Copy helpers
 # ---------------------------------------------------------------------------
 
-link_dir() {
+copy_dir() {
     local src="${1%/}"   # strip trailing slash
     local dest_dir="$2"
     local name
     name="$(basename "$src")"
     local dest="$dest_dir/$name"
 
-    if [[ -e "$dest" && ! -L "$dest" ]]; then
-        warn "Skipping $dest — exists as a real directory (remove it manually to replace)"
-        return
-    fi
-
-    # Remove existing symlink first; ln -sf on a symlink-to-dir nests inside it
-    [[ -L "$dest" ]] && rm "$dest"
-    ln -s "$src" "$dest"
+    rm -rf "$dest"
+    cp -r "$src" "$dest"
     info "$src -> $dest"
 }
 
-link_file() {
+copy_file() {
     local src="$1"
     local dest="$2"
 
-    if [[ -e "$dest" && ! -L "$dest" ]]; then
-        warn "Skipping $dest — exists as a real file (remove it manually to replace)"
-        return
-    fi
-
-    ln -sf "$src" "$dest"
+    cp "$src" "$dest"
     info "$src -> $dest"
 }
 
@@ -62,7 +51,7 @@ install_skills_to() {
     local count=0
     for d in "$SCRIPT_DIR/skills"/*/; do
         [[ -d "$d" ]] || continue
-        link_dir "$d" "$target/skills"
+        copy_dir "$d" "$target/skills"
         (( count++ )) || true
     done
 
@@ -83,7 +72,7 @@ install_agents_to() {
     local count=0
     for d in "$SCRIPT_DIR/agents"/*/; do
         [[ -d "$d" ]] || continue
-        link_dir "$d" "$target/agents"
+        copy_dir "$d" "$target/agents"
         (( count++ )) || true
     done
 
@@ -105,12 +94,12 @@ install_hooks_to() {
     local hooks_dest="$target/hooks"
     mkdir -p "$hooks_dest"
 
-    # Link every hook script (symlink; replaces existing symlinks or real files)
+    # Copy every hook script (replaces existing files)
     for f in "$hooks_src"/*.sh; do
         [[ -f "$f" ]] || continue
         local dest_file="$hooks_dest/$(basename "$f")"
-        chmod +x "$f"
-        ln -sf "$f" "$dest_file"
+        cp "$f" "$dest_file"
+        chmod +x "$dest_file"
         info "$f -> $dest_file"
     done
 
