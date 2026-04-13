@@ -4,30 +4,30 @@
     "hooks": {
       "beforeShellExecution": [
         {
-          "command": "$HOOKS_DIR/block-dangerous.sh"
+          "command": "~/.cursor/hooks/block-dangerous.sh"
         },
         {
-          "command": "$HOOKS_DIR/notify-permission.sh"
+          "command": "~/.cursor/hooks/notify-permission.sh"
         }
       ],
       "preToolUse": [
         {
-          "command": "$HOOKS_DIR/block-dangerous.sh",
+          "command": "~/.cursor/hooks/block-dangerous.sh",
           "matcher": "Delete|Shell"
         },
         {
-          "command": "$HOOKS_DIR/protect-files.sh",
+          "command": "~/.cursor/hooks/protect-files.sh",
           "matcher": "Delete|Write"
         }
       ],
       "beforeMCPExecution": [
         {
-          "command": "$HOOKS_DIR/notify-permission.sh"
+          "command": "~/.cursor/hooks/notify-permission.sh"
         }
       ],
       "stop": [
         {
-          "command": "$HOOKS_DIR/notify-done.sh"
+          "command": "~/.cursor/hooks/notify-done.sh"
         }
       ]
     }
@@ -40,7 +40,7 @@
           "hooks": [
             {
               "type": "command",
-              "command": "$HOOKS_DIR/block-dangerous.sh"
+              "command": "~/.claude/hooks/block-dangerous.sh"
             }
           ]
         },
@@ -49,7 +49,7 @@
           "hooks": [
             {
               "type": "command",
-              "command": "$HOOKS_DIR/protect-files.sh"
+              "command": "~/.claude/hooks/protect-files.sh"
             }
           ]
         }
@@ -59,7 +59,7 @@
           "hooks": [
             {
               "type": "command",
-              "command": "$HOOKS_DIR/notify-permission.sh"
+              "command": "~/.claude/hooks/notify-permission.sh"
             }
           ]
         }
@@ -69,7 +69,7 @@
           "hooks": [
             {
               "type": "command",
-              "command": "$HOOKS_DIR/notify-done.sh"
+              "command": "~/.claude/hooks/notify-done.sh"
             }
           ]
         }

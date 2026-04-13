@@ -1,0 +1,23 @@
+{
+  "env": {
+    "DISABLE_TELEMETRY": "1",
+    "DISABLE_ERROR_REPORTING": "1",
+    "CLAUDE_CODE_ENABLE_TELEMETRY": "0",
+    "CLAUDE_CODE_ATTRIBUTION_HEADER": "0",
+    "CLAUDE_CODE_DISABLE_FEEDBACK_SURVEY": "1",
+    "CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC": "1",
+    "CLAUDE_CODE_DISABLE_1M_CONTEXT": "1",
+    "CLAUDE_CODE_DISABLE_ADAPTIVE_THINKING": "1",
+    "ANTHROPIC_DEFAULT_OPUS_MODEL": "claude-4-5-opus",
+    "CLAUDE_CODE_EFFORT_LEVEL": "max"
+  },
+  "attribution": {
+    "commit": "",
+    "pr": ""
+  },
+  "effortLevel": "high",
+  "promptSuggestionEnabled": false,
+  "plansDirectory": "./.claude/plans",
+  "prefersReducedMotion": true,
+  "terminalProgressBarEnabled": false
+}

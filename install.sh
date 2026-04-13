@@ -105,8 +105,8 @@ install_hooks_to() {
 
     # Merge hook config into the appropriate settings file
     case "$target" in
-        */.claude)  _merge_claude_hooks  "$target" "$hooks_dest" ;;
-        */.cursor)  _merge_cursor_hooks  "$target" "$hooks_dest" ;;
+        */.claude)  _merge_claude_hooks  "$target" ;;
+        */.cursor)  _merge_cursor_hooks  "$target" ;;
     esac
 }
 
@@ -115,15 +115,13 @@ install_hooks_to() {
 # existing hooks or other settings fields.
 _merge_claude_hooks() {
     local target="$1"
-    local hooks_dest="$2"
     local settings="$target/settings.json"
 
-    python3 - "$settings" "$SCRIPT_DIR/agent-hooks.json" "$hooks_dest" <<'PYEOF'
+    python3 - "$settings" "$SCRIPT_DIR/agent-hooks.json" <<'PYEOF'
 import json, sys, os
 
 settings_path = sys.argv[1]
 hooks_json_path = sys.argv[2]
-hooks_dest = sys.argv[3]
 
 # Load (or initialise) settings
 if os.path.exists(settings_path):
@@ -134,10 +132,10 @@ else:
 
 settings.setdefault("hooks", {})
 
-# Load desired hooks from agent-hooks.json, substituting $HOOKS_DIR
+# Load desired hooks from agent-hooks.json
 with open(hooks_json_path) as f:
-    raw = f.read().replace("$HOOKS_DIR", hooks_dest)
-desired = json.loads(raw).get("claude", {}).get("hooks", {})
+    desired_config = json.load(f)
+desired = desired_config.get("claude", {}).get("hooks", {})
 
 changed = False
 for event, entries in desired.items():
@@ -172,15 +170,13 @@ PYEOF
 # Adds only entries whose "command" is not already present; preserves existing hooks.
 _merge_cursor_hooks() {
     local target="$1"
-    local hooks_dest="$2"
     local hooks_file="$target/hooks.json"
 
-    python3 - "$hooks_file" "$SCRIPT_DIR/agent-hooks.json" "$hooks_dest" <<'PYEOF'
+    python3 - "$hooks_file" "$SCRIPT_DIR/agent-hooks.json" <<'PYEOF'
 import json, sys, os
 
 hooks_file_path = sys.argv[1]
 hooks_json_path = sys.argv[2]
-hooks_dest = sys.argv[3]
 
 # Load (or initialise) hooks.json
 if os.path.exists(hooks_file_path):
@@ -192,10 +188,10 @@ else:
 config.setdefault("version", 1)
 config.setdefault("hooks", {})
 
-# Load desired hooks from agent-hooks.json, substituting $HOOKS_DIR
+# Load desired hooks from agent-hooks.json
 with open(hooks_json_path) as f:
-    raw = f.read().replace("$HOOKS_DIR", hooks_dest)
-desired = json.loads(raw).get("cursor", {}).get("hooks", {})
+    desired_config = json.load(f)
+desired = desired_config.get("cursor", {}).get("hooks", {})
 
 changed = False
 for event, entries in desired.items():
