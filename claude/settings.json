@@ -11,6 +11,13 @@
     "ANTHROPIC_DEFAULT_OPUS_MODEL": "claude-4-5-opus",
     "CLAUDE_CODE_EFFORT_LEVEL": "max"
   },
+  "permissions": {
+    "deny": [
+      "Read",
+      "Glob",
+      "Grep"
+    ]
+  },
   "attribution": {
     "commit": "",
     "pr": ""
