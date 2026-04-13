@@ -105,7 +105,10 @@ install_hooks_to() {
 
     # Merge hook config into the appropriate settings file
     case "$target" in
-        */.claude)  _merge_claude_hooks  "$target" ;;
+        */.claude)
+            _merge_claude_hooks    "$target"
+            _merge_claude_settings "$target"
+            ;;
         */.cursor)  _merge_cursor_hooks  "$target" ;;
     esac
 }
@@ -157,6 +160,51 @@ for event, entries in desired.items():
             changed = True
 
 if changed:
+    with open(settings_path, "w") as f:
+        json.dump(settings, f, indent=2)
+        f.write("\n")
+    print(f"  updated  {settings_path}")
+else:
+    print(f"  up-to-date {settings_path}")
+PYEOF
+}
+
+# Merge claude/settings.json from the repo into ~/.claude/settings.json.
+# Adds missing top-level keys and missing keys within nested objects; never
+# overwrites values the user has already set.
+_merge_claude_settings() {
+    local target="$1"
+    local settings="$target/settings.json"
+    local src="$SCRIPT_DIR/claude/settings.json"
+
+    [[ -f "$src" ]] || return 0
+
+    python3 - "$settings" "$src" <<'PYEOF'
+import json, sys, os
+
+settings_path = sys.argv[1]
+src_path = sys.argv[2]
+
+if os.path.exists(settings_path):
+    with open(settings_path) as f:
+        settings = json.load(f)
+else:
+    settings = {}
+
+with open(src_path) as f:
+    src = json.load(f)
+
+def merge(target, source):
+    changed = False
+    for key, val in source.items():
+        if key not in target:
+            target[key] = val
+            changed = True
+        elif isinstance(target[key], dict) and isinstance(val, dict):
+            changed = merge(target[key], val) or changed
+    return changed
+
+if merge(settings, src):
     with open(settings_path, "w") as f:
         json.dump(settings, f, indent=2)
         f.write("\n")
